@@ -33,9 +33,6 @@ void qtree_traverse_node(Node* node) { // counter clockwise starting at upper ri
       }
     }
   }
-  // printf("%s at %.2f %.2f with dimensions %.2f, %.2f\n",
-  //        node_type_to_cstr(node->type),
-  //        node->pos.x, node->pos.y, node->w, node->h);
   if (node->type == NODE_LEAF || node->type == NODE_EMPTY) {
     printf("%s at %.2f %.2f with dimensions %.2f, %.2f\n",
            node_type_to_cstr(node->type),
@@ -43,12 +40,21 @@ void qtree_traverse_node(Node* node) { // counter clockwise starting at upper ri
   }
 }
 
-void qtree_free(Node* root) {
-  assert(false && "not implemented");
+void qtree_free(Node* node) {
+  if (node->type == NODE_BRANCH || node->type == NODE_ROOT) {
+    if (node->children != NULL) {
+      for (int rpos = RELPOS_UR; rpos < RELPOS_NUM; rpos++) {
+        qtree_free(&node->children[rpos]);
+      }
+      node->children = NULL;
+    }
+  }
 }
 
 void node_free(Node* node) {
-  assert(false && "not implemented");
+  if (node->children != NULL) {
+    free(node->children);
+  }
 }
 
 void insert_children(Node* node) {
@@ -63,9 +69,11 @@ void insert_children(Node* node) {
 }
 
 bool qtree_insert(Node *ins_node, V2 point) {
+#ifdef DEBUG
   log_msg("Insert (%.2f, %.2f) into tree at (%.2f, %.2f) (%s)", 
           P_COORDS(point), P_COORDS(ins_node->pos),
           relpos_to_cstr(relative_pos(&ins_node->pos, &point)));
+#endif
   Node *cur_node = ins_node;
   Node *parent = ins_node;
   if ( (point.x >  cur_node->pos.x + cur_node->w / 2)
@@ -157,3 +165,4 @@ V2 gen_pos_parent(Node* parent, RelPos pos) {
       assert(false && "unreachable, RELPOS_NUM is never used");
   }
 }
+

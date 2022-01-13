@@ -49,6 +49,7 @@ void draw_rect(SDL_Renderer* renderer, float x, float y, float w, float h, bool 
 typedef enum {
   MODE_POINTS = 0,
   MODE_OUTLINE,
+  MODE_SELECT,
   N_MODES
 } ProgramMode;
 
@@ -99,6 +100,25 @@ void draw_qtree(Node* node) {
   }
 }
 
+// build a qtree form n_lists PLists
+void build_qtree(Node* root, size_t n_lists, ...) {
+  va_list args;
+  va_start(args, n_lists);
+
+  for (size_t i = 0; i < n_lists; i++) {
+    PList *list = va_arg(args, PList*);
+    for (size_t j = 0; j < list->count; j++) {
+      qtree_insert(root, list->points[j]);
+    }
+  }
+  va_end(args);
+}
+
+void regenerate_qtree() {
+  qtree_free(&qtree);
+  build_qtree(&qtree, 2, &g_points, &outline);
+}
+
 void undo() {
   switch (mode) {
     case MODE_OUTLINE:
@@ -106,6 +126,8 @@ void undo() {
       break;
     case MODE_POINTS:
       PList_pop(&g_points);
+      break;
+    case MODE_SELECT:
       break;
     case N_MODES:
       assert(false && "unreachable");
@@ -117,6 +139,16 @@ void handle_sdlevents(bool* quit) {
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_KEYDOWN) {
       switch (event.key.keysym.sym) {
+        case SDLK_d:
+          draw_tree = !draw_tree;
+          log_msg("Toggle Drawing Qtree");
+          break;
+        case SDLK_g:
+          regenerate_qtree();
+          break;
+        case SDLK_p:
+          qtree_traverse_node(&qtree);
+          break;
         case SDLK_q:
           *quit = true;;
           break;
@@ -124,17 +156,8 @@ void handle_sdlevents(bool* quit) {
           undo();
           break;
         case SDLK_TAB:
-            mode = (mode + 1) % N_MODES;
+          mode = (mode + 1) % N_MODES;
           log_msg("change mode to %i", mode);
-        case SDLK_d:
-          draw_tree = !draw_tree;
-          log_msg("Toggle Drawing Qtree");
-          break;
-        case SDLK_p:
-          qtree_traverse_node(&qtree);
-          break;
-        case SDLK_m:
-          // create_mesh(&outline, &g_points);
           break;
       }
     }
@@ -144,7 +167,9 @@ void handle_sdlevents(bool* quit) {
       if (!PList_push(cur_list, event.button.x, event.button.y)) {
         log_msg("WARN: Point capacity Reached");
       }
-      qtree_insert(&qtree, cur_list->points[cur_list->count - 1]);
+    }
+
+    if (event.type == SDL_MOUSEBUTTONDOWN) {
     }
 
     if (event.type == SDL_QUIT) {
