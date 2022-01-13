@@ -1,15 +1,14 @@
 #include "stdio.h"
 #include "stdbool.h"
-#include "stdarg.h"
 #include "assert.h"
 
 #include "SDL.h"
 
 #include "datastructs.h"
+#include "qtree.h"
+#include "mesh.h"
+#include "logging.h"
 
-#define log_msg(...) _log(__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-
-#define P_COORDS(point) point.x, point.y
 
 #define UNPACK(val) (val & 0xFF000000) >> 24,\
                     (val & 0x00FF0000) >> 16,\
@@ -24,21 +23,16 @@
 #define C_OUTL 0x99D59DFF
 #define C_OUTL_STA 0xB380B0FF
 #define C_OUTL_END 0x729893FF
+#define C_QTREE_EMPTY 0x485F84FF
+#define C_QTREE_LEAF  0xE49B5DFF
+#define C_QTREE_ROBR  0x7D2A2FFF
 
 #define POINTS_DRAW_RADIUS 10 // pixels
 
-void _log(const char* func, const char *file, int line, const char *fmt, ...) {
-  va_list args;
-  fprintf(stderr, "%s:%i (%s): ", file, line, func);
-  va_start(args, fmt);
+#define POINTS_CAP 1024
 
-  vfprintf(stderr, fmt, args);
-  fprintf(stderr, "\n");
 
-  va_end(args);
-}
-
-void draw_rect(SDL_Renderer* renderer, int x, int y, int w, int h, bool fill) {
+void draw_rect(SDL_Renderer* renderer, float x, float y, float w, float h, bool fill) {
   const SDL_FRect rect = {
     .x = x - w / 2,
     .y = y - h / 2,
@@ -58,15 +52,52 @@ typedef enum {
   N_MODES
 } ProgramMode;
 
-
 PList g_points;
 PList outline;
 
 EList edges;
-
+Node qtree;
+Mesh mesh;
+bool draw_tree = false;
 
 ProgramMode mode = MODE_OUTLINE;
 SDL_Renderer *renderer;
+
+void draw_qtree(Node* node) {
+  switch (node->type) {
+    case NODE_BRANCH:
+      SDL_SetRenderDrawColor(renderer, UNPACK(C_QTREE_ROBR));
+      draw_rect(renderer, P_COORDS(node->pos),
+                POINTS_DRAW_RADIUS, POINTS_DRAW_RADIUS, true);
+      draw_rect(renderer, P_COORDS(node->pos),
+                node->w, node->h, false);
+      for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
+        draw_qtree(&node->children[pos]);
+      }
+      break;
+    case NODE_LEAF:
+      SDL_SetRenderDrawColor(renderer, UNPACK(C_QTREE_LEAF));
+      draw_rect(renderer, P_COORDS(node->pos),
+                POINTS_DRAW_RADIUS, POINTS_DRAW_RADIUS, true);
+      break;
+    case NODE_EMPTY:
+      SDL_SetRenderDrawColor(renderer, UNPACK(C_QTREE_EMPTY));
+      draw_rect(renderer, P_COORDS(node->pos), node->w, node->h, false);
+      draw_rect(renderer, P_COORDS(node->pos),
+                POINTS_DRAW_RADIUS, POINTS_DRAW_RADIUS, true);
+      break;
+    case NODE_ROOT:
+      SDL_SetRenderDrawColor(renderer, UNPACK(C_QTREE_ROBR));
+      draw_rect(renderer, P_COORDS(node->pos),
+                POINTS_DRAW_RADIUS, POINTS_DRAW_RADIUS, true);
+      if (node->children != NULL) {
+        for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
+          draw_qtree(&node->children[pos]);
+        }
+      }
+      break;
+  }
+}
 
 void undo() {
   switch (mode) {
@@ -87,12 +118,24 @@ void handle_sdlevents(bool* quit) {
     if (event.type == SDL_KEYDOWN) {
       switch (event.key.keysym.sym) {
         case SDLK_q:
-          *quit = true;
+          *quit = true;;
           break;
         case SDLK_u:
           undo();
+          break;
+        case SDLK_TAB:
+            mode = (mode + 1) % N_MODES;
+          log_msg("change mode to %i", mode);
+        case SDLK_d:
+          draw_tree = !draw_tree;
+          log_msg("Toggle Drawing Qtree");
+          break;
+        case SDLK_p:
+          qtree_traverse_node(&qtree);
+          break;
         case SDLK_m:
-          mode = (mode + 1) % N_MODES;
+          // create_mesh(&outline, &g_points);
+          break;
       }
     }
 
@@ -101,6 +144,7 @@ void handle_sdlevents(bool* quit) {
       if (!PList_push(cur_list, event.button.x, event.button.y)) {
         log_msg("WARN: Point capacity Reached");
       }
+      qtree_insert(&qtree, cur_list->points[cur_list->count - 1]);
     }
 
     if (event.type == SDL_QUIT) {
@@ -143,6 +187,13 @@ int main() {
   g_points = PList_new(POINTS_CAP);
   outline = PList_new(POINTS_CAP);
 
+  qtree = node_new(v2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2),
+                   NODE_ROOT,
+                   SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  log_msg("Root of Qtree at (%.2f, %.2f) with dims (%.2f, %.2f)",
+          P_COORDS(qtree.pos), qtree.w, qtree.h);
+
   while (!quit) {
     handle_sdlevents(&quit);
 
@@ -153,6 +204,10 @@ int main() {
     }
 
     draw_outline();
+
+    if (draw_tree) {
+      draw_qtree(&qtree);
+    }
 
     SDL_RenderPresent(renderer);
     SDL_SetRenderDrawColor(renderer, UNPACK(C_BACK));

@@ -1,11 +1,63 @@
 #include "datastructs.h"
 
 #include "stdbool.h"
+#include "math.h"
+#include "assert.h"
+
+V2 v2(float x, float y) {
+  return (V2) {.x = x, .y = y};
+}
+
+V2 v2_add(V2 a, V2 b) {
+  return (V2) {a.x + b.x, a.y + b.y};
+}
+V2 v2_sub(V2 a, V2 b) {
+  return (V2) {a.x - b.x, a.y - b.y};
+}
+
+V2 v2_scale(V2 a, float s) {
+  return (V2) {a.x * s, a.y * s};
+}
+
+float v2_len(V2 a) {
+  return sqrt(a.x * a.x + a.y * a.y);
+}
+
+RelPos relative_pos(const V2* target, const V2* rel) {
+  // TODO: maybe condense this using setting of bits
+  if (rel->x <= target->x && rel->y <= target->y) {
+    return RELPOS_UL;
+  } else if (rel->x > target->x && rel->y <= target->y) {
+    return RELPOS_UR;
+  } else if (rel->x > target->x && rel->y > target->y) {
+    return RELPOS_LR;
+  } else if (rel->x <= target->x && rel->y > target->y) {
+    return RELPOS_LL;
+  }
+  assert(false && "unreachable, all positions are covered");
+}
+
+const char* relpos_to_cstr(RelPos relpos) {
+  switch (relpos) {
+    case RELPOS_UR:
+      return "UPPER RIGHT";
+    case RELPOS_UL:
+      return "UPPER LEFT";
+    case RELPOS_LL:
+      return "LOWER LEFT";
+    case RELPOS_LR:
+      return "LOWER RIGHT";
+    case RELPOS_NUM:
+      return "NUM OF RELPOS";
+  }
+}
+
 
 PList PList_new(size_t points_cap) {
   return (PList) {
-    malloc(sizeof(V2) * points_cap),
-    0,
+    .points = malloc(sizeof(V2) * points_cap),
+    .count = 0,
+    .cap = points_cap,
   };
 }
 
@@ -15,7 +67,7 @@ void PList_free(PList* list) {
 }
 
 bool PList_push(PList* list, float x, float y) {
-  if (list->count >= POINTS_CAP) {
+  if (list->count >= list->cap) {
     return false;
   }
   list->points[list->count] = (V2) {x, y};
@@ -33,18 +85,19 @@ bool PList_pop(PList* list) {
 
 EList EList_new(size_t edges_cap) {
   return (EList) {
-    malloc(sizeof(V2*) * edges_cap),
-    0,
+    .edges = malloc(sizeof(V2*) * edges_cap),
+    .count = 0,
+    .cap = edges_cap,
   };
 }
 
 void EList_free(EList* list) {
   free(list->edges);
-  list->count = 0;
+  list->cap = 0;
 }
 
 bool EList_push(EList* list, V2* p0, V2* p1) {
-  if (list->count >= POINTS_CAP) {
+  if (list->count >= list->cap) {
     return false;
   }
   list->edges[list->count] = (Edge) {p0, p1};
