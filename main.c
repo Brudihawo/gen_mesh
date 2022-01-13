@@ -5,24 +5,26 @@
 
 #include "SDL.h"
 
+#include "datastructs.h"
+
 #define log_msg(...) _log(__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+
+#define P_COORDS(point) point.x, point.y
 
 #define UNPACK(val) (val & 0xFF000000) >> 24,\
                     (val & 0x00FF0000) >> 16,\
                     (val & 0x0000FF00) >> 8,\
                     (val & 0x000000FF)
 
-#define P_COORDS(point) point.x, point.y
-
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
+
 #define C_BACK 0x352F2AFF
 #define C_PNTS 0xC65333FF
 #define C_OUTL 0x99D59DFF
 #define C_OUTL_STA 0xB380B0FF
 #define C_OUTL_END 0x729893FF
 
-#define POINTS_CAP 1024
 #define POINTS_DRAW_RADIUS 10 // pixels
 
 void _log(const char* func, const char *file, int line, const char *fmt, ...) {
@@ -55,84 +57,6 @@ typedef enum {
   MODE_OUTLINE,
   N_MODES
 } ProgramMode;
-
-typedef struct {
-  float x;
-  float y;
-} V2;
-
-typedef struct {
-  V2 *points;
-  size_t count;
-} PList;
-
-PList PList_new(size_t points_cap) {
-  return (PList) {
-    malloc(sizeof(V2) * points_cap),
-    0,
-  };
-}
-
-void PList_free(PList* list) {
-  free(list->points);
-  list->count = 0;
-}
-
-bool PList_push(PList* list, float x, float y) {
-  if (list->count >= POINTS_CAP) {
-    return false;
-  }
-  list->points[list->count] = (V2) {x, y};
-  list->count++;
-  return true;
-}
-
-bool PList_pop(PList* list) {
-  if (list->count == 0) {
-    return false;
-  }
-  list->count--;
-  return true;
-}
-
-typedef struct {
-  V2 *p0;
-  V2 *p1;
-} Edge;
-
-typedef struct {
-  Edge *edges;
-  size_t count;
-} EList;
-
-EList EList_new(size_t edges_cap) {
-  return (EList) {
-    malloc(sizeof(V2*) * edges_cap),
-    0,
-  };
-}
-
-void EList_free(EList* list) {
-  free(list->edges);
-  list->count = 0;
-}
-
-bool EList_push(EList* list, V2* p0, V2* p1) {
-  if (list->count >= POINTS_CAP) {
-    return false;
-  }
-  list->edges[list->count] = (Edge) {p0, p1};
-  list->count++;
-  return true;
-}
-
-bool EList_pop(PList* list) {
-  if (list->count == 0) {
-    return false;
-  }
-  list->count--;
-  return true;
-}
 
 
 PList g_points;
