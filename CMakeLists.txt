@@ -1,15 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(gen_mesh)
 
-add_executable(gen_mesh main.c
-                        datastructs.c
-                        mesh.c
-                        qtree.c
-                        logging.c)
+set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
+add_subdirectory(${SRC_DIR})
 
-target_link_libraries(gen_mesh m)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests ${CMAKE_CURRENT_LIST_DIR}/tests/exes)
 
-# SDL2
-find_package(SDL2 REQUIRED)
-target_include_directories(gen_mesh PUBLIC ${SDL2_INCLUDE_DIRS})
-target_link_libraries(gen_mesh ${SDL2_LIBRARIES})

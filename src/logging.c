@@ -4,7 +4,7 @@
 #include "logging.h"
 
 void _log(const char* func, const char *file, int line, const char *fmt, ...) {
-#ifndef DEBUG
+#ifdef DEBUG
   va_list args;
   fprintf(stderr, "%s:%i (%s): ", file, line, func);
   va_start(args, fmt);

@@ -25,20 +25,39 @@ const char* node_type_to_cstr(NodeType type) {
   }
 }
 
-void qtree_traverse_node(Node* node) { // counter clockwise starting at upper right
+void _qtree_traverse_node(FILE* f, Node* node) { // counter clockwise starting at upper right
   if (node->type == NODE_BRANCH || node->type == NODE_ROOT){
     if (node->children != NULL) {
       for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
-        qtree_traverse_node(&node->children[pos]);
+        _qtree_traverse_node(f, &node->children[pos]);
       }
     }
   }
   if (node->type == NODE_LEAF || node->type == NODE_EMPTY) {
-    printf("%s at %.2f %.2f with dimensions %.2f, %.2f\n",
+    fprintf(f, "%s at %.2f %.2f with dimensions %.2f, %.2f\n",
            node_type_to_cstr(node->type),
            node->pos.x, node->pos.y, node->w, node->h);
   }
 }
+
+size_t _qtree_count_leaves(Node* node, size_t cur) {
+  size_t tmp = 0;
+  switch (node->type) {
+  case NODE_EMPTY:
+    return 0;
+  case NODE_LEAF:
+    return 1;
+  case NODE_BRANCH ... NODE_ROOT:
+    if (node->children == NULL) {
+      return 0;
+    }
+    for (int rpos = RELPOS_UR; rpos < RELPOS_NUM; rpos++) {
+      tmp += _qtree_count_leaves(&node->children[rpos], cur);
+    }
+    return tmp;
+  }
+}
+
 
 void qtree_free(Node* node) {
   if (node->type == NODE_BRANCH || node->type == NODE_ROOT) {
@@ -69,11 +88,9 @@ void insert_children(Node* node) {
 }
 
 bool qtree_insert(Node *ins_node, V2 point) {
-#ifdef DEBUG
   log_msg("Insert (%.2f, %.2f) into tree at (%.2f, %.2f) (%s)", 
           P_COORDS(point), P_COORDS(ins_node->pos),
           relpos_to_cstr(relative_pos(&ins_node->pos, &point)));
-#endif
   Node *cur_node = ins_node;
   Node *parent = ins_node;
   if ( (point.x >  cur_node->pos.x + cur_node->w / 2)
@@ -149,6 +166,38 @@ bool qtree_insert(Node *ins_node, V2 point) {
   } else {
     assert(false && "unreachable, other types handled before");
   }
+}
+
+Node* find_closest(Node* root, V2* point) {
+  Node* cur_node = root;
+  Node* parent = root;
+
+  if (root->type == NODE_LEAF || root->type == NODE_EMPTY) {
+    log_msg("WARN: cannot find closest node using leaf node as entry point");
+    return NULL;
+  }
+
+  while (!(cur_node->type == NODE_LEAF || cur_node->type == NODE_EMPTY)) {
+    RelPos rpos = relative_pos(&cur_node->pos, point);
+
+    // Here, CUR_NODE can become NODE_LEAF or NODE_EMPTY
+    parent = cur_node;
+    cur_node = &cur_node->children[rpos];
+  }
+
+  Node* closest = NULL;
+  float closest_dist = -1;
+  for (int rpos = RELPOS_UR; rpos < RELPOS_NUM; rpos++) { // max 4 iterations
+    if (parent->children[rpos].type == NODE_LEAF) { // current child is not NULL
+      float cur_dist = v2_dist(closest->pos, *point);
+      if (closest_dist > cur_dist) { // if no distance set yet, this will be true
+        closest = &parent->children[rpos];
+        closest_dist = cur_dist;
+      } 
+    }
+  }
+
+  return closest;
 }
 
 V2 gen_pos_parent(Node* parent, RelPos pos) {

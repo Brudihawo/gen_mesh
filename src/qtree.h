@@ -30,7 +30,13 @@ Node node_new(V2 pos, NodeType type, float w, float h);
 V2 gen_pos_parent(Node* parent, RelPos pos);
 
 bool qtree_insert(Node *node, V2 point);
-void qtree_traverse_node(Node* node);
+
+#define qtree_traverse_node(node) _qtree_traverse_node(stdout, node)
+void _qtree_traverse_node(FILE* f, Node* node);
+
+#define qtree_count_leaves(node) _qtree_count_leaves(node, 0)
+size_t _qtree_count_leaves(Node* node, size_t cur);
+
 void node_free(Node* node);
 void qtree_free(Node* root);
 

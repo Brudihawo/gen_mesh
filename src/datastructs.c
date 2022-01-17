@@ -4,23 +4,28 @@
 #include "math.h"
 #include "assert.h"
 
-V2 v2(float x, float y) {
+inline V2 v2(float x, float y) {
   return (V2) {.x = x, .y = y};
 }
 
-V2 v2_add(V2 a, V2 b) {
+inline V2 v2_add(const V2 a, const V2 b) {
   return (V2) {a.x + b.x, a.y + b.y};
 }
-V2 v2_sub(V2 a, V2 b) {
+
+inline V2 v2_sub(const V2 a, const V2 b) {
   return (V2) {a.x - b.x, a.y - b.y};
 }
 
-V2 v2_scale(V2 a, float s) {
+inline V2 v2_scale(const V2 a, float s) {
   return (V2) {a.x * s, a.y * s};
 }
 
-float v2_len(V2 a) {
+inline float v2_len(const V2 a) {
   return sqrt(a.x * a.x + a.y * a.y);
+}
+
+inline float v2_dist(const V2 a, const V2 b) {
+  return v2_len(v2_sub(b, a));
 }
 
 RelPos relative_pos(const V2* target, const V2* rel) {
