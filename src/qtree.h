@@ -43,4 +43,6 @@ size_t _qtree_count_leaves(Node* node, size_t cur);
 void node_free(Node* node);
 void qtree_free(Node* root);
 
+Node* qtree_find_closest(Node* root, V2* point);
+
 #endif // QTREE_H

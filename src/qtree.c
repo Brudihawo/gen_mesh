@@ -175,7 +175,8 @@ bool _qtree_insert(Node *ins_node, V2 point, size_t depth) {
   }
 }
 
-Node* find_closest(Node* root, V2* point) {
+// TODO: find_closest is broken
+Node* qtree_find_closest(Node* root, V2* point) {
   Node* cur_node = root;
   Node* parent = root;
 
@@ -193,10 +194,10 @@ Node* find_closest(Node* root, V2* point) {
   }
 
   Node* closest = NULL;
-  float closest_dist = -1;
+  float closest_dist = -1.0;
   for (int rpos = RELPOS_UR; rpos < RELPOS_NUM; rpos++) { // max 4 iterations
     if (parent->children[rpos].type == NODE_LEAF) { // current child is not NULL
-      float cur_dist = v2_dist(closest->pos, *point);
+      float cur_dist = v2_dist(parent->children[rpos].pos, *point);
       if (closest_dist > cur_dist) { // if no distance set yet, this will be true
         closest = &parent->children[rpos];
         closest_dist = cur_dist;
