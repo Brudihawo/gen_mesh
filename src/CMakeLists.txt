@@ -10,6 +10,10 @@ add_library(
   ${CMAKE_CURRENT_LIST_DIR}/logging.c
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set_target_properties(logging PROPERTIES COMPILE_FLAGS "-DVERB_LEVEL=VERB_ERR")
+endif()
+
 add_executable(gen_mesh ${CMAKE_CURRENT_LIST_DIR}/main.c)
 
 target_link_libraries(gen_mesh m utils logging)

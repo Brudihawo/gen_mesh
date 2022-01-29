@@ -4,5 +4,5 @@ project(gen_mesh)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 add_subdirectory(${SRC_DIR})
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests ${CMAKE_CURRENT_LIST_DIR}/tests/exes)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tests)
 
