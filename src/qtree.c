@@ -29,11 +29,13 @@ const char* node_type_to_cstr(NodeType type) {
 void _qtree_traverse_node(FILE* f, Node* node) { // counter clockwise starting at upper right
   if (node->type == NODE_BRANCH || node->type == NODE_ROOT){
     for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
+      if (node->children == NULL) break;
       if (&node->children[pos] != NULL) {
         _qtree_traverse_node(f, &node->children[pos]);
       }
     }
   }
+
   if (node->type == NODE_LEAF || node->type == NODE_EMPTY) {
     fprintf(f, "%s at %.2f %.2f with dimensions %.2f, %.2f\n",
            node_type_to_cstr(node->type),
@@ -66,9 +68,9 @@ void qtree_free(Node* node) {
       for (int rpos = RELPOS_UR; rpos < RELPOS_NUM; rpos++) {
         qtree_free(&node->children[rpos]);
       }
-      node->children = NULL;
     }
   }
+  node_free(node);
 }
 
 void node_free(Node* node) {

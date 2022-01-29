@@ -24,6 +24,7 @@ struct Node_t {
   Node* children; // 4 Children or None
 };
 
+const char* node_type_to_cstr(NodeType type);
 Node node_new(V2 pos, NodeType type, float w, float h);
 
 // generate a new V2 from parent node
