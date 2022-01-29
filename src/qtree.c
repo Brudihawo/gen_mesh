@@ -1,7 +1,8 @@
 #include "stdio.h"
 #include "qtree.h"
-#include "logging.h"
 #include "assert.h"
+
+#include "logging.h"
 
 Node node_new(V2 pos, NodeType type, float w, float h) {
   return (Node) {
@@ -27,8 +28,8 @@ const char* node_type_to_cstr(NodeType type) {
 
 void _qtree_traverse_node(FILE* f, Node* node) { // counter clockwise starting at upper right
   if (node->type == NODE_BRANCH || node->type == NODE_ROOT){
-    if (node->children != NULL) {
-      for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
+    for (size_t pos = RELPOS_UR; pos < RELPOS_NUM; pos++) {
+      if (&node->children[pos] != NULL) {
         _qtree_traverse_node(f, &node->children[pos]);
       }
     }
@@ -87,16 +88,17 @@ void insert_children(Node* node) {
   }
 }
 
-bool qtree_insert(Node *ins_node, V2 point) {
-  log_msg("Insert (%.2f, %.2f) into tree at (%.2f, %.2f) (%s)", 
+bool _qtree_insert(Node *ins_node, V2 point, size_t depth) {
+  log_msg("Insert (%.2f, %.2f) into tree at (%.2f, %.2f) (%s) with depth %ld", 
           P_COORDS(point), P_COORDS(ins_node->pos),
-          relpos_to_cstr(relative_pos(&ins_node->pos, &point)));
+          relpos_to_cstr(relative_pos(&ins_node->pos, &point)),
+          depth);
   Node *cur_node = ins_node;
   Node *parent = ins_node;
-  if ( (point.x >  cur_node->pos.x + cur_node->w / 2)
-    || (point.x <= cur_node->pos.x - cur_node->w / 2)
-    || (point.y >  cur_node->pos.y + cur_node->h / 2)
-    || (point.y <= cur_node->pos.y - cur_node->h / 2)) {
+  if ( (point.x > cur_node->pos.x + cur_node->w / 2)
+    || (point.x < cur_node->pos.x - cur_node->w / 2)
+    || (point.y > cur_node->pos.y + cur_node->h / 2)
+    || (point.y < cur_node->pos.y - cur_node->h / 2)) {
     // Node out of bounds
 
     log_msg("Node at (%.2f, %.2f) out of bounds", point.x, point.y);
@@ -125,6 +127,7 @@ bool qtree_insert(Node *ins_node, V2 point) {
 
     // HERE, CUR_NODE can become LEAF or EMPTY
     cur_node = &cur_node->children[rpos];
+    depth++;
   }
 
 
@@ -136,6 +139,11 @@ bool qtree_insert(Node *ins_node, V2 point) {
       cur_node->pos = point;
       return true;
   } else if (cur_node->type == NODE_LEAF) { // data at node
+    // insert point as new leaf
+    if (v2_eq(cur_node->pos, point)) {
+      log_wrn("IGNORING NODE AT (%.2f, %.2f)", P_COORDS(point));
+      return false;
+    }
     cur_node->type = NODE_BRANCH;
     cur_node->w = parent->w / 2;
     cur_node->h = parent->h / 2;
@@ -159,10 +167,7 @@ bool qtree_insert(Node *ins_node, V2 point) {
     cur_node->children[prev_node_rpos].pos = prev_node_pos;
     cur_node->children[prev_node_rpos].type = NODE_LEAF;
 
-    // insert point as new leaf
-    qtree_insert(parent, point);
-
-    return true;
+    return _qtree_insert(cur_node, point, depth++);
   } else {
     assert(false && "unreachable, other types handled before");
   }

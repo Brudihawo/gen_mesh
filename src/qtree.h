@@ -1,5 +1,6 @@
 #ifndef QTREE_H
 #define QTREE_H
+
 #include "stdio.h"
 #include "stdbool.h"
 #include "assert.h"
@@ -29,7 +30,8 @@ Node node_new(V2 pos, NodeType type, float w, float h);
 // with parents width and height / 2 as distance per direction
 V2 gen_pos_parent(Node* parent, RelPos pos);
 
-bool qtree_insert(Node *node, V2 point);
+#define qtree_insert(node, point) _qtree_insert(node, point, 0)
+bool _qtree_insert(Node *node, V2 point, size_t depth);
 
 #define qtree_traverse_node(node) _qtree_traverse_node(stdout, node)
 void _qtree_traverse_node(FILE* f, Node* node);
