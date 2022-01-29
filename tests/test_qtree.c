@@ -25,17 +25,6 @@
 #define N_POINTS_CLOSEST 128
 #define N_TESTS_CLOSEST 128
 
-FILE *safeopen(const char *fname, const char *mode) {
-  FILE *f = fopen(fname, mode);
-
-  if (f == NULL) {
-    fprintf(stderr, "Could not open file %s: %s", fname, strerror(errno));
-    exit(1);
-  }
-
-  return f;
-}
-
 float rand_float() {
   return (float)rand() / (float)RAND_MAX;
 }
