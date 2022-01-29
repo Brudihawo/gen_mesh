@@ -34,8 +34,9 @@
 
 ## In-File TODOS
 - [x] `./src/logging.h:10`:       TODO: Fix Verbosity thing
-- [ ] `./src/datastructs.c:36`:   TODO: maybe condense this using setting of bits
-- [ ] `./tests/test_qtree.c:72`:  TODO: assertion for correctness is missing
-- [ ] `./tests/test_qtree.c:95`:  TODO: Add assert statement for verification
-- [ ] `./tests/test_qtree.c:104`: TODO: Test insert position location correctness
-- [ ] `./tests/test_qtree.c:105`: TODO: Test closest point correctness
+- [ ] `./src/datastructs.c:37`:   TODO: maybe condense this using setting of bits
+- [ ] `./src/qtree.c:178`:        TODO: `qtree_find_closest` is broken
+- [ ] `./tests/test_qtree.c:83`:  TODO: Add assert statement for verification
+- [ ] `./tests/test_qtree.c:151`: TODO: Assert fails in qtree insertion, why?
+- [ ] `./tests/test_qtree.c:174`: TODO: Test insert position location correctness
+- [ ] `./tests/test_qtree.c:175`: TODO: Test closest point correctness
