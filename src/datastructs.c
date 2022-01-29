@@ -28,6 +28,10 @@ inline float v2_dist(const V2 a, const V2 b) {
   return v2_len(v2_sub(b, a));
 }
 
+bool v2_eq(const V2 a, const V2 b) {
+  return (a.x == b.x) && (a.y == b.y);
+}
+
 RelPos relative_pos(const V2* target, const V2* rel) {
   // TODO: maybe condense this using setting of bits
   if (rel->x <= target->x && rel->y <= target->y) {

@@ -26,6 +26,7 @@ V2 v2_sub(const V2 a, const V2 b);
 V2 v2_scale(const V2 a, float s);
 float v2_len(const V2 a);
 float v2_dist(const V2 a, const V2 b);
+bool v2_eq(const V2 a, const V2 b);
 
 RelPos relative_pos(const V2* pos, const V2* rel);
 
