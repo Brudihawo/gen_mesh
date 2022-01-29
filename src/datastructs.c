@@ -1,5 +1,6 @@
 #include "datastructs.h"
 
+#include "stdio.h"
 #include "stdbool.h"
 #include "math.h"
 #include "assert.h"
@@ -34,16 +35,16 @@ bool v2_eq(const V2 a, const V2 b) {
 
 RelPos relative_pos(const V2* target, const V2* rel) {
   // TODO: maybe condense this using setting of bits
-  if (rel->x <= target->x && rel->y <= target->y) {
+  if        (rel->x <= target->x && rel->y <= target->y) {
     return RELPOS_UL;
-  } else if (rel->x > target->x && rel->y <= target->y) {
-    return RELPOS_UR;
-  } else if (rel->x > target->x && rel->y > target->y) {
-    return RELPOS_LR;
-  } else if (rel->x <= target->x && rel->y > target->y) {
+  } else if (rel->x <= target->x && rel->y  > target->y) {
     return RELPOS_LL;
+  } else if (rel->x  > target->x && rel->y <= target->y) {
+    return RELPOS_UR;
+  } else if (rel->x  > target->x && rel->y  > target->y) {
+    return RELPOS_LR;
   }
-  assert(false && "unreachable, all positions are covered");
+  assert(false && "unreachable, all positions are covered, maybe a value is nan");
 }
 
 const char* relpos_to_cstr(RelPos relpos) {
